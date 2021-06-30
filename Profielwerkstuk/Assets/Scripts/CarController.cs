@@ -6,42 +6,46 @@ using UnityEngine.AI;
 [System.Serializable]
 public class CarController : MonoBehaviour {
 
-    private List<GameObject> sensors = new List<GameObject>();
+    public enum ControllerType {
+        manual,
+        automatic,
+    }
 
-    public Handler handler;
-    public float[] sensorInputs;
-    public float learningRate = 20f;
+    [Header("Simulation Settings")]
+    public bool collectData;
+    public ControllerType controllerType; // The type of input the car is controlled by
 
-    [SerializeField]
-    public NeuralNetwork brain;
-
-    public float[] output = new float[2];
-    public float refreshTime;
+    [Header("Controller settings")]
+    public float refreshTime; // Time between fetching the data from the neural network
     public float moveSpeed;
     public float steerSpeed;
 
+    [Header("Algoithm settings")]
+    public float[] sensorInputs;
     public float fitness = 0f;
     private Vector3 lastPosition;
 
+    [SerializeField]
+    private NeuralNetwork brain;
+    private float[] output = new float[2];
+    private List<GameObject> sensors = new List<GameObject>();
+
+    public CarController(float test) {
+        Debug.Log("CarController was created with argument: " + test);
+    }
+
     void Start() {
-        int childeren = transform.childCount;
-        for(int i = 0; i < childeren; i++) {
-            GameObject sensorChild = transform.GetChild(i).gameObject;
-            if(sensorChild.tag == "Sensor") {
-                sensors.Add(sensorChild);
+        foreach(GameObject c in transform) {
+            if(c.tag == "Sensor") {
+                sensors.Add(c);
             }
         }
 
-        // Mutate the assigned neural network
-        Matrix temp = new Matrix(brain.weights_ho.rows, brain.weights_ho.cols).multiply(learningRate);
-        brain.weights_ho = brain.weights_ho.add(temp);
-        brain.weights_ih = brain.weights_ih.add(new Matrix(brain.weights_ih.rows, brain.weights_ih.cols).multiply(learningRate));
-        brain.bias_h = brain.bias_h.add(new Matrix(brain.bias_h.rows, brain.bias_h.cols).multiply(learningRate));
-        brain.bias_o = brain.bias_o.add(new Matrix(brain.bias_o.rows, brain.bias_o.cols).multiply(learningRate));
-
-        // Something wrong with the add function
-
         StartCoroutine("getPrediction");
+
+        if(collectData) {
+            StartCoroutine("writeData");
+        }
     }
 
     void Update() {
@@ -62,11 +66,16 @@ public class CarController : MonoBehaviour {
     IEnumerator getPrediction() {
         for(;;) {
             float[] inputs = getSensorInputs();
-
             output = brain.predict(inputs).ToArray();
 
+            yield return new WaitForSeconds(refreshTime);
+        }
+    }
 
-
+    IEnumerator writeData() {
+        for(;;) {
+            // Write to file
+            
             yield return new WaitForSeconds(refreshTime);
         }
     }
