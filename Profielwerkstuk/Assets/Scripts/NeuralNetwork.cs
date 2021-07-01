@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using UnityEngine;
 
 [System.Serializable]
-public class NeuralNetwork {
+public class NeuralNetwork : IController {
     
     public Matrix weights_ih, weights_ho, bias_h, bias_o;
     // The configuration of the network, meaning the values of the biases and synapses
@@ -30,7 +30,7 @@ public class NeuralNetwork {
         bias_o = newConfiguration.bias_o;
     }
 
-    public List<double> predict(float[] inputs) {
+    public List<float> predict(float[] inputs) {
         // Propagate forward to predict output based in inputs
         Matrix input = Matrix.fromArray(inputs);
         Matrix hidden = Matrix.multiply(weights_ih, input);

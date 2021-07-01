@@ -5,13 +5,13 @@ using UnityEngine;
 [System.Serializable]
 public class Matrix {
     [SerializeField]
-    public double[][] data;
+    public float[][] data;
     public int rows, cols;
 
     public Matrix(int _rows,int _cols) {
-        data = new double[_rows][];
+        data = new float[_rows][];
         for (int i=0; i<data.Length; i++) {
-            data[i] = new double[_cols];
+            data[i] = new float[_cols];
         }
 
         this.rows = _rows;
@@ -25,9 +25,6 @@ public class Matrix {
     }
 
     public Matrix add(Matrix m) {
-        
-        Debug.Log("Before: " + this.data[0][0]);
-
         if(cols != m.cols || rows != m.rows) {
             Debug.Log("Matrix shape doesn't match");
             return null;
@@ -38,8 +35,6 @@ public class Matrix {
                 this.data[i][j] += m.data[i][j];
             }
         }
-
-        Debug.Log("After: " + this.data[0][0]);
 
         return this;
     }
@@ -77,13 +72,13 @@ public class Matrix {
 
         for(int i = 0; i < temp.rows; i++) {
             for(int j = 0; j < temp.cols; j++) {
-                double sum = 0;
+                float sum = 0;
 
                 for(int k=0;k<a.cols;k++) {
                     sum += a.data[i][k] * b.data[k][j];
                 }
 
-                temp.data[i][j]=sum;
+                temp.data[i][j] = sum;
             }
         }
         return temp;
@@ -112,7 +107,7 @@ public class Matrix {
     public void sigmoid() {
         for(int i = 0; i < rows; i++) {
             for(int j = 0; j < cols; j++) {
-                this.data[i][j] = 1 / (1 + Mathf.Exp((float)-this.data[i][j]));
+                this.data[i][j] = 1 / (1 + Mathf.Exp(-this.data[i][j]));
             }
         }
     }
@@ -139,8 +134,8 @@ public class Matrix {
         return temp;
     }
 
-    public List<double> toArray() {
-        List<double> temp = new List<double>();
+    public List<float> toArray() {
+        List<float> temp = new List<float>();
 
         for(int i = 0; i < rows; i++) {
             for(int j = 0; j < cols; j++) {

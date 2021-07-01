@@ -1,6 +1,8 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using System.IO;
+using UnityEditor;
 
 public class Handler : MonoBehaviour {
 
@@ -24,6 +26,10 @@ public class Handler : MonoBehaviour {
     public float refreshTime; // The sensory update time of the cars
     public float moveSpeed; // The moveing speed of the cars
     public float steerSpeed; // The steering speed of the cars
+    public bool collectData;
+
+    [TextArea]
+    public string logs;
 
     // Singleton design pattern
     private void Awake() {
@@ -56,8 +62,36 @@ public class Handler : MonoBehaviour {
         // Create car controller and initialize
         CarController controller = car.AddComponent<CarController>();
 
-        NeuralNetwork carBrain = new NeuralNetwork(5, 3, 2, Random.Range(0, 999));
+        IController carBrain = null;
+        if(controllerType == ControllerType.automatic) {
+            carBrain = new NeuralNetwork(5, 3, 2, Random.Range(0, 999));
+        } else if(controllerType == ControllerType.manual) {
+            carBrain = new ManualController();
+        }
+
         controller.brain = carBrain;
+
         car.name += " | BrainID: #" + carBrain.GetHashCode();
+    }
+
+    public void AddLog(string personalLog) {
+        logs += personalLog;
+        logs += "\n";
+        Debug.Log("Added");
+    }
+
+    void OnDestroy() {
+        Debug.Log(logs);
+        writeStringToFile(logs);
+    }
+
+    void writeStringToFile(string content) {
+        string path = "Assets/Scripts/test.txt";
+
+        StreamWriter writer = new StreamWriter(path, true);
+        writer.WriteLine(content);
+        writer.Close();
+
+        AssetDatabase.ImportAsset(path); 
     }
 }

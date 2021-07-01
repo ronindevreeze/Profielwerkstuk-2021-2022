@@ -8,7 +8,6 @@ public class CarController : MonoBehaviour {
 
     [Header("Simulation Settings")]
     public bool collectData;
-    public Handler.ControllerType controllerType; // The type of input the car is controlled by
 
     [Header("Controller settings")]
     public float refreshTime; // Time between fetching the data from the neural network
@@ -21,10 +20,11 @@ public class CarController : MonoBehaviour {
     private Vector3 lastPosition;
 
     [SerializeField, HideInInspector]
-    public NeuralNetwork brain;
+    public IController brain;
 
-    public double[] output = new double[2];
+    public float[] output = new float[2];
     private List<GameObject> sensors = new List<GameObject>();
+    private string personalLog = "";
 
     void Start() {
         // Add all the sensors to the list
@@ -34,6 +34,7 @@ public class CarController : MonoBehaviour {
             }
         }
 
+        collectData = Handler.Instance.collectData;
         refreshTime = Handler.Instance.refreshTime;
         moveSpeed = Handler.Instance.moveSpeed;
         steerSpeed = Handler.Instance.steerSpeed;
@@ -49,8 +50,8 @@ public class CarController : MonoBehaviour {
 
     void Update() {
         // Move according to output float array
-        transform.Translate(Vector3.forward * moveSpeed * (float)(output[0] + 1) * Time.deltaTime);
-        transform.Rotate(Vector3.up * steerSpeed * (float)output[0] * (float)((output[1] - 0.5f) * 2) * Time.deltaTime);
+        transform.Translate(Vector3.forward * moveSpeed * output[0] * Time.deltaTime);
+        transform.Rotate(Vector3.up * steerSpeed * output[0] * ((output[1] - 0.5f) * 2) * Time.deltaTime);
 
         // Update the fitness
         fitness += Vector3.Distance(transform.position, lastPosition) * Time.deltaTime;
@@ -72,7 +73,17 @@ public class CarController : MonoBehaviour {
 
     IEnumerator writeData() {
         for(;;) {
-            // Write to file
+            for (int i = 0; i < sensors.Count; i++) { // write sensor data
+                personalLog += sensorInputs[i] + " | ";
+            }
+
+            personalLog += output[0] + " | "; // write vertical axis
+            personalLog += output[1]; // write horizontal axis 
+
+            Debug.Log(personalLog);
+            Handler.Instance.AddLog(personalLog);
+
+            personalLog = "";
             
             yield return new WaitForSeconds(refreshTime);
         }
@@ -107,7 +118,7 @@ public class CarController : MonoBehaviour {
         
         // Draw output vector of car
         Gizmos.color = Color.green;
-        Gizmos.DrawLine(transform.position, transform.position + transform.forward * (float)output[0]);
-        Gizmos.DrawLine(transform.position, transform.position + transform.right * (float)(output[1] - 0.5f) * 2);
+        Gizmos.DrawLine(transform.position, transform.position + transform.forward * output[0]);
+        Gizmos.DrawLine(transform.position, transform.position + transform.right * (output[1] - 0.5f) * 2);
     }
 }
