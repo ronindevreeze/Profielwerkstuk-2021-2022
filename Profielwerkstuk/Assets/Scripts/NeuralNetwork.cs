@@ -21,10 +21,6 @@ public class NeuralNetwork {
         bias_o = new Matrix(o, 1);
     }
 
-    public NeuralNetwork() {
-        
-    }
-
     public NeuralNetwork(NeuralNetwork newConfiguration) {
         // Create a new network from a existing template configuration
         weights_ih = newConfiguration.weights_ih;
@@ -34,7 +30,7 @@ public class NeuralNetwork {
         bias_o = newConfiguration.bias_o;
     }
 
-    public List<float> predict(float[] inputs) {
+    public List<double> predict(float[] inputs) {
         // Propagate forward to predict output based in inputs
         Matrix input = Matrix.fromArray(inputs);
         Matrix hidden = Matrix.multiply(weights_ih, input);

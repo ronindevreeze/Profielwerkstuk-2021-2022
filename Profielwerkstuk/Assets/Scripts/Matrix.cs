@@ -5,24 +5,28 @@ using UnityEngine;
 [System.Serializable]
 public class Matrix {
     [SerializeField]
-    public float[,] data;
+    public double[][] data;
     public int rows, cols;
 
     public Matrix(int _rows,int _cols) {
-        data = new float[_rows, _cols];
+        data = new double[_rows][];
+        for (int i=0; i<data.Length; i++) {
+            data[i] = new double[_cols];
+        }
+
         this.rows = _rows;
         this.cols = _cols;
 
         for(int i = 0; i < rows; i++) {
             for(int j = 0;j < cols; j++) {
-                data[i,j] = Random.Range(-1f, 1f);
+                data[i][j] = Random.Range(-1f, 1f);
             }
         }
     }
 
     public Matrix add(Matrix m) {
         
-        Debug.Log("Before: " + this.data[0,0]);
+        Debug.Log("Before: " + this.data[0][0]);
 
         if(cols != m.cols || rows != m.rows) {
             Debug.Log("Matrix shape doesn't match");
@@ -31,11 +35,11 @@ public class Matrix {
 
         for(int i = 0; i < rows; i++) {
             for(int j = 0; j < cols; j++) {
-                this.data[i,j] += m.data[i,j];
+                this.data[i][j] += m.data[i][j];
             }
         }
 
-        Debug.Log("After: " + this.data[0,0]);
+        Debug.Log("After: " + this.data[0][0]);
 
         return this;
     }
@@ -45,7 +49,7 @@ public class Matrix {
 
         for(int i = 0; i < a.rows; i++) {
             for(int j = 0; j < a.cols; j++) {
-                temp.data[i,j] = a.data[i,j] - b.data[i,j];
+                temp.data[i][j] = a.data[i][j] - b.data[i][j];
             }
         }
 
@@ -57,11 +61,15 @@ public class Matrix {
 
         for(int i = 0; i < a.rows; i++) {
             for(int j = 0; j < a.cols; j++) {
-                temp.data[j,i] = a.data[i,j];
+                temp.data[j][i] = a.data[i][j];
             }
         }
 
         return temp;
+    }
+
+    public void print() {
+
     }
 
     public static Matrix multiply(Matrix a, Matrix b) {
@@ -69,13 +77,13 @@ public class Matrix {
 
         for(int i = 0; i < temp.rows; i++) {
             for(int j = 0; j < temp.cols; j++) {
-                float sum = 0;
+                double sum = 0;
 
-                for(int k = 0; k < a.cols; k++) {
-                    sum += a.data[i,k] * b.data[k,j];
+                for(int k=0;k<a.cols;k++) {
+                    sum += a.data[i][k] * b.data[k][j];
                 }
 
-                temp.data[i,j]=sum;
+                temp.data[i][j]=sum;
             }
         }
         return temp;
@@ -84,7 +92,7 @@ public class Matrix {
     public void multiply(Matrix a) {
         for(int i = 0; i < a.rows; i++) {
             for(int j = 0; j < a.cols; j++) {
-                this.data[i,j] *= a.data[i,j];
+                this.data[i][j] *= a.data[i][j];
             }
         }
     }
@@ -93,7 +101,7 @@ public class Matrix {
         //Debug.Log("Before: " + this.data[0,0]);
         for(int i = 0; i < rows; i++) {
             for(int j = 0; j < cols; j++) {
-                this.data[i,j] *= a;
+                this.data[i][j] *= a;
             }
         }
         //Debug.Log("After: " + this.data[0,0]);
@@ -103,8 +111,9 @@ public class Matrix {
 
     public void sigmoid() {
         for(int i = 0; i < rows; i++) {
-            for(int j = 0; j < cols; j++)
-                this.data[i,j] = 1 / (1 + Mathf.Exp(-this.data[i,j]));
+            for(int j = 0; j < cols; j++) {
+                this.data[i][j] = 1 / (1 + Mathf.Exp((float)-this.data[i][j]));
+            }
         }
     }
 
@@ -113,7 +122,7 @@ public class Matrix {
 
         for(int i = 0; i < rows; i++) {
             for(int j = 0; j < cols; j++) {
-                temp.data[i,j] = this.data[i,j] * (1 - this.data[i,j]);
+                temp.data[i][j] = this.data[i][j] * (1 - this.data[i][j]);
             }
         }
 
@@ -124,18 +133,18 @@ public class Matrix {
         Matrix temp = new Matrix(x.Length, 1);
 
         for(int i = 0; i < x.Length; i++) {
-            temp.data[i,0] = x[i];
+            temp.data[i][0] = x[i];
         }
 
         return temp;
     }
 
-    public List<float> toArray() {
-        List<float> temp = new List<float>();
+    public List<double> toArray() {
+        List<double> temp = new List<double>();
 
         for(int i = 0; i < rows; i++) {
             for(int j = 0; j < cols; j++) {
-                temp.Add(data[i,j]);
+                temp.Add(data[i][j]);
             }
         }
 

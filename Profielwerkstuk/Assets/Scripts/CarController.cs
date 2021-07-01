@@ -6,14 +6,9 @@ using UnityEngine.AI;
 [System.Serializable]
 public class CarController : MonoBehaviour {
 
-    public enum ControllerType {
-        manual,
-        automatic,
-    }
-
     [Header("Simulation Settings")]
     public bool collectData;
-    public ControllerType controllerType; // The type of input the car is controlled by
+    public Handler.ControllerType controllerType; // The type of input the car is controlled by
 
     [Header("Controller settings")]
     public float refreshTime; // Time between fetching the data from the neural network
@@ -25,33 +20,37 @@ public class CarController : MonoBehaviour {
     public float fitness = 0f;
     private Vector3 lastPosition;
 
-    [SerializeField]
-    private NeuralNetwork brain;
-    private float[] output = new float[2];
+    [SerializeField, HideInInspector]
+    public NeuralNetwork brain;
+
+    public double[] output = new double[2];
     private List<GameObject> sensors = new List<GameObject>();
 
-    public CarController(float test) {
-        Debug.Log("CarController was created with argument: " + test);
-    }
-
     void Start() {
-        foreach(GameObject c in transform) {
-            if(c.tag == "Sensor") {
-                sensors.Add(c);
+        // Add all the sensors to the list
+        for(int i = 0; i < transform.childCount; i++) {
+            if(transform.GetChild(i).tag == "Sensor") {
+                sensors.Add(transform.GetChild(i).gameObject);
             }
         }
 
+        refreshTime = Handler.Instance.refreshTime;
+        moveSpeed = Handler.Instance.moveSpeed;
+        steerSpeed = Handler.Instance.steerSpeed;
+
+        // Start getting the predictions
         StartCoroutine("getPrediction");
 
+        // collect data is neccecary
         if(collectData) {
             StartCoroutine("writeData");
         }
     }
 
     void Update() {
-        // TODO: move according to output float array
-        transform.Translate(Vector3.forward * moveSpeed * (output[0] + 1) * Time.deltaTime);
-        transform.Rotate(Vector3.up * steerSpeed * output[0] * ((output[1] - 0.5f) * 2) * Time.deltaTime);
+        // Move according to output float array
+        transform.Translate(Vector3.forward * moveSpeed * (float)(output[0] + 1) * Time.deltaTime);
+        transform.Rotate(Vector3.up * steerSpeed * (float)output[0] * (float)((output[1] - 0.5f) * 2) * Time.deltaTime);
 
         // Update the fitness
         fitness += Vector3.Distance(transform.position, lastPosition) * Time.deltaTime;
@@ -59,13 +58,12 @@ public class CarController : MonoBehaviour {
     }
 
     void OnTriggerEnter(Collider other) {
-        die();
-        moveSpeed = steerSpeed = 0;
+        Die();
     }
 
     IEnumerator getPrediction() {
         for(;;) {
-            float[] inputs = getSensorInputs();
+            float[] inputs = GetSensorInputs();
             output = brain.predict(inputs).ToArray();
 
             yield return new WaitForSeconds(refreshTime);
@@ -80,7 +78,7 @@ public class CarController : MonoBehaviour {
         }
     }
 
-    float[] getSensorInputs() {
+    float[] GetSensorInputs() {
         sensorInputs = new float[sensors.Count];
 
         for(int i = 0; i < sensorInputs.Length; i++) {
@@ -95,19 +93,21 @@ public class CarController : MonoBehaviour {
         return sensorInputs;
     }
 
-    void die() {
+    void Die() {
         transform.GetChild(0).gameObject.SetActive(false);
         moveSpeed = steerSpeed = 0;
     }
 
     void OnDrawGizmos() {
         for (int i = 0; i < sensors.Count; i++) {
+            // Draw sensors
             Gizmos.color = Color.red;
             Gizmos.DrawLine(sensors[i].transform.position, sensors[i].transform.position + (sensors[i].transform.forward * sensorInputs[i]));
-
-            Gizmos.color = Color.green;
-            Gizmos.DrawLine(transform.position, transform.position + transform.forward * output[0]);
-            Gizmos.DrawLine(transform.position, transform.position + transform.right * (output[1] - 0.5f) * 2);
         }
+        
+        // Draw output vector of car
+        Gizmos.color = Color.green;
+        Gizmos.DrawLine(transform.position, transform.position + transform.forward * (float)output[0]);
+        Gizmos.DrawLine(transform.position, transform.position + transform.right * (float)(output[1] - 0.5f) * 2);
     }
 }
