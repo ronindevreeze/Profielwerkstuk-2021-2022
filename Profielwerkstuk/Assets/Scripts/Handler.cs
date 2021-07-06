@@ -69,7 +69,7 @@ public class Handler : MonoBehaviour {
         // Create car with specified configuration and values
         GameObject car = GameObject.Instantiate(carPrefab) as GameObject;
         car.tag = "Car";
-        car.transform.SetParent(transform);
+        car.transform.SetParent(transform.GetChild(0));
         car.transform.position = new Vector3(random.Next(-50, 50), 0, random.Next(-50, 50));
 
         // Create car controller and initialize
