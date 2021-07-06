@@ -63,8 +63,18 @@ public class Matrix {
         return temp;
     }
 
-    public void print() {
+    public string print(bool print) {
+        string message = "";
+        for(int i = 0; i < rows; i++) {
+            for(int j = 0; j < cols; j++) {
+                message += data[i][j] + " | ";
+            }
+            
+            message += "\n"; 
+        }
 
+        if(print) { Debug.Log(message); }
+        return message;
     }
 
     public static Matrix multiply(Matrix a, Matrix b) {

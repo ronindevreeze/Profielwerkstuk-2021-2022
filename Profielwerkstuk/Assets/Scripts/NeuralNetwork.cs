@@ -3,15 +3,12 @@ using System.Collections.Generic;
 using UnityEngine;
 
 [System.Serializable]
-public class NeuralNetwork : IController {
+public class NeuralNetwork {
     
     public Matrix weights_ih, weights_ho, bias_h, bias_o;
     // The configuration of the network, meaning the values of the biases and synapses
 
-    public NeuralNetwork(int i, int h, int o, int seed) {
-        // Create a new network from the specified size and seed
-        Random.InitState(seed);
-
+    public NeuralNetwork(int i, int h, int o) {
         // Create matrixes for the synapses
         weights_ih = new Matrix(h, i);
         weights_ho = new Matrix(o, h);

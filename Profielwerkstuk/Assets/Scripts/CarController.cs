@@ -20,13 +20,17 @@ public class CarController : MonoBehaviour {
     private Vector3 lastPosition;
 
     [SerializeField, HideInInspector]
-    public IController brain;
+    public NeuralNetwork brain;
 
     public float[] output = new float[2];
     private List<GameObject> sensors = new List<GameObject>();
     private string personalLog = "";
+    public string config;
 
     void Start() {
+        Debug.Log("==== New Car ====");
+        Debug.Log(brain.weights_ho.print(false) + "\n\n" + brain.weights_ih.print(false) + "\n\n" + brain.bias_h.print(false) + "\n\n" + brain.bias_o.print(false));
+
         // Add all the sensors to the list
         for(int i = 0; i < transform.childCount; i++) {
             if(transform.GetChild(i).tag == "Sensor") {
@@ -73,14 +77,15 @@ public class CarController : MonoBehaviour {
 
     IEnumerator writeData() {
         for(;;) {
+            personalLog += name + " | "; // write name
+
             for (int i = 0; i < sensors.Count; i++) { // write sensor data
-                personalLog += sensorInputs[i] + " | ";
+                personalLog += sensorInputs[i] + ", ";
             }
 
-            personalLog += output[0] + " | "; // write vertical axis
+            personalLog += " | " + output[0] + ", "; // write vertical axis
             personalLog += output[1]; // write horizontal axis 
 
-            Debug.Log(personalLog);
             Handler.Instance.AddLog(personalLog);
 
             personalLog = "";
@@ -107,6 +112,9 @@ public class CarController : MonoBehaviour {
     void Die() {
         transform.GetChild(0).gameObject.SetActive(false);
         moveSpeed = steerSpeed = 0;
+        Debug.Log(name + " died with a fitness of " + fitness);
+        name += " | Fitness: " + fitness;
+        Handler.Instance.agents.Add(this.gameObject);
     }
 
     void OnDrawGizmos() {
