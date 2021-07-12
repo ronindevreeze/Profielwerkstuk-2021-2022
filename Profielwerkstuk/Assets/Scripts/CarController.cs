@@ -28,8 +28,15 @@ public class CarController : MonoBehaviour {
     public string config;
 
     void Start() {
-        Debug.Log("==== New Car ====");
-        Debug.Log(brain.weights_ho.print(false) + "\n\n" + brain.weights_ih.print(false) + "\n\n" + brain.bias_h.print(false) + "\n\n" + brain.bias_o.print(false));
+        Debug.Log("==== New Car ====" + 
+        "\n\n---- Weights_HO ----\n\n" + 
+        brain.weights_ho.print(false) + 
+        "\n\n---- Weights_IH ----\n\n" 
+        + brain.weights_ih.print(false) + 
+        "\n\n---- Bias_H ----\n\n" + 
+        brain.bias_h.print(false) + 
+        "\n\n---- Bias_O ----\n\n" + 
+        brain.bias_o.print(false));
 
         // Add all the sensors to the list
         for(int i = 0; i < transform.childCount; i++) {

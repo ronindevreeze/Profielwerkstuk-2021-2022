@@ -4,13 +4,13 @@ using UnityEngine;
 using System.IO;
 using UnityEditor;
 using UnityEngine.UI;
+using UnityEngine.AI;
 
 public class Handler : MonoBehaviour {
 
     public List<GameObject> agents = new List<GameObject>();
     public InputField SizeInput;
     public InputField TopInput;
-    public InputField MutationInput;
     private System.Random random;
 
     // Singleton
@@ -54,15 +54,25 @@ public class Handler : MonoBehaviour {
         NeuralNetwork[] bestNets = getTopCars(top);
 
         // Clear and remove all agents from list
-        foreach(GameObject g in agents) {
-            Destroy(g);
+        foreach(Transform t in transform.GetChild(0)) {
+            Destroy(t.gameObject);
         }
         agents.Clear();
 
         for (int i = 0; i < size; i++) {
             createAgent(bestNets[i % top]);
         }
-        
+
+        NeuralNetwork average = getAverageNeuralNet(bestNets);
+        Debug.Log("==== Average Net: ====" + 
+        "\n\n---- Weights_HO ----\n\n" + 
+        average.weights_ho.print(false) + 
+        "\n\n---- Weights_IH ----\n\n" 
+        + average.weights_ih.print(false) + 
+        "\n\n---- Bias_H ----\n\n" + 
+        average.bias_h.print(false) + 
+        "\n\n---- Bias_O ----\n\n" + 
+        average.bias_o.print(false));
     }
 
     public void createAgent(NeuralNetwork brain) {
@@ -70,7 +80,9 @@ public class Handler : MonoBehaviour {
         GameObject car = GameObject.Instantiate(carPrefab) as GameObject;
         car.tag = "Car";
         car.transform.SetParent(transform.GetChild(0));
-        car.transform.position = new Vector3(random.Next(-50, 50), 0, random.Next(-50, 50));
+        NavMeshHit hit;
+        NavMesh.SamplePosition(new Vector3(random.Next(-100, 100), 0, random.Next(-100, 100)), out hit, 10000f, NavMesh.AllAreas);
+        car.transform.position = hit.position;
 
         // Create car controller and initialize
         CarController controller = car.AddComponent<CarController>();
@@ -79,8 +91,6 @@ public class Handler : MonoBehaviour {
     }
 
     public NeuralNetwork[] getTopCars(int top) {
-        Debug.Log("Getting top " + top + " cars");
-
         NeuralNetwork[] list = new NeuralNetwork[top];
         agents.Sort(SortByFitness);
 
@@ -101,41 +111,35 @@ public class Handler : MonoBehaviour {
         return p2.GetComponent<CarController>().fitness.CompareTo(p1.GetComponent<CarController>().fitness);
     }
 
-    public NeuralNetwork getAverageNeuralNet(int size) {
-        if(agents.Count < size) {
-            return new NeuralNetwork(5, 3, 2);
-        } else {
-            NeuralNetwork[] list = getTopCars(size); // Get the best scoring cars according to their fitness
-            NeuralNetwork average = new NeuralNetwork(5, 3, 2);
+    public NeuralNetwork getAverageNeuralNet(NeuralNetwork[] bestNets) {
+        NeuralNetwork average = new NeuralNetwork(5, 3, 2);
 
-            // Clear the average neural net to contain only zero's
-            average.weights_ho.multiply(0f);
-            average.weights_ih.multiply(0f);
-            average.bias_h.multiply(0f);
-            average.bias_o.multiply(0f);
-            
-            // Add the neural net matrices of all the individual best scoring cars
-            for(int i = 0; i < size; i++) {
-                average.weights_ho.add(list[i].weights_ho);
-                average.weights_ih.add(list[i].weights_ih);
-                average.bias_h.add(list[i].bias_h);
-                average.bias_o.add(list[i].bias_o);
-            }
+        // Clear the average neural net to contain only zero's
+        average.weights_ho.multiply(0f);
+        average.weights_ih.multiply(0f);
+        average.bias_h.multiply(0f);
+        average.bias_o.multiply(0f);
+        
+        // Add the neural net matrices of all the individual best scoring cars
+        for(int i = 0; i < bestNets.Length; i++) {
+            average.weights_ho.add(bestNets[i].weights_ho);
+            average.weights_ih.add(bestNets[i].weights_ih);
+            average.bias_h.add(bestNets[i].bias_h);
+            average.bias_o.add(bestNets[i].bias_o);
+        }
 
-            // Divide by 1 / size to get the average
-            average.weights_ho.multiply(1f / size);
-            average.weights_ih.multiply(1f / size);
-            average.bias_h.multiply(1f / size);
-            average.bias_o.multiply(1f / size);
+        // Divide by 1 / size to get the average
+        average.weights_ho.multiply(1f / bestNets.Length);
+        average.weights_ih.multiply(1f / bestNets.Length);
+        average.bias_h.multiply(1f / bestNets.Length);
+        average.bias_o.multiply(1f / bestNets.Length);
 
-            return average;
-        }        
+        return average;   
     }
 
     public void AddLog(string personalLog) {
         logs += personalLog;
         logs += "\n";
-        Debug.Log("Added");
     }
 
     void OnDestroy() {
